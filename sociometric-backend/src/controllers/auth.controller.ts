@@ -45,36 +45,6 @@ export const login: AsyncRequestHandler = async (req, res, next) => {
   }
 };
 
-export const studentLogin: AsyncRequestHandler = async (req, res, next) => {
-  try {
-    const { hash } = req.body;
-    const student = await Student.findOne({ hash });
-    
-    if (!student || student.hasCompleted) {
-      res.status(401).json({ success: false, message: 'Invalid or used access code' });
-      return;
-    }
-
-    const token = jwt.sign(
-      { 
-        id: student._id,
-        survey: student.survey.toString(),
-        role: 'student' 
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: '1h' }
-    );
-
-    res.status(200).json({ 
-      success: true, 
-      token,
-      surveyId: student.survey
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const generateStudentHashes: AsyncRequestHandler = async (req, res, next) => {
   try {
     const { studentNames, surveyId, class: className } = req.body;
@@ -107,6 +77,37 @@ export const getMe: AsyncRequestHandler = async (req, res, next) => {
       return;
     }
     res.status(200).json({ success: true, data: teacher });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update studentLogin to populate survey data
+export const studentLogin: AsyncRequestHandler = async (req, res, next) => {
+  try {
+    const { hash } = req.body;
+    const student = await Student.findOne({ hash })
+      .populate('survey');
+    
+    if (!student || student.hasCompleted) {
+      throw Error("Invalid or used access code");
+    }
+
+    const token = jwt.sign(
+      { 
+        id: student._id,
+        survey: student.survey,
+        role: 'student' 
+      },
+      process.env.JWT_SECRET!,
+      { expiresIn: '2h' } // Longer expiry for students
+    );
+
+    res.status(200).json({ 
+      success: true, 
+      token,
+      surveyId: student.survey
+    });
   } catch (error) {
     next(error);
   }

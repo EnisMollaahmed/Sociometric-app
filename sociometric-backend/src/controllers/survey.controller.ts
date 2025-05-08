@@ -4,6 +4,7 @@ import Survey from '../models/Survey';
 import Question from '../models/Question';
 import Student from '../models/Student';
 import { AsyncRequestHandler } from '../types/types';
+import crypto from 'crypto'
 
 export const getTeacherSurveys: AsyncRequestHandler = async (req, res, next) => {
   try {
@@ -40,12 +41,18 @@ export const createSurvey: AsyncRequestHandler = async (req, res, next) => {
   try {
     const { title, description, class: className, questions } = req.body;
 
+    // First find the actual questions in database to get their real IDs
+    const questionDocs = await Question.find({
+      content: { $in: questions } // Match questions by content
+    });
+
+
     const survey = await Survey.create({
       title,
       description,
       class: className,
       teacher: req.user.id,
-      questions,
+      questions: questionDocs.map(q => q._id), // Use the actual question IDs
       status: 'draft'
     });
 
@@ -88,6 +95,75 @@ export const submitSurvey: AsyncRequestHandler = async (req, res, next) => {
     await student.save();
 
     res.status(200).json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const getQuestions: AsyncRequestHandler = async (req, res, next) => {
+  try {
+    const questions = await Question.find({}).lean(); // Use lean() for plain JS objects
+    const questionsWithId = questions.map(q => ({
+      ...q,
+      id: q._id.toString() // Explicitly include the ID
+    }));
+    res.status(200).json({ success: true, data: questionsWithId });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update the generateStudentHashes controller to be survey-specific
+export const generateStudentHashes: AsyncRequestHandler = async (req, res, next) => {
+  try {
+    const { studentNames } = req.body;
+    const surveyId = req.params.id;
+    
+    // Delete existing students for this survey
+    await Student.deleteMany({ survey: surveyId });
+
+    // Get survey to verify it exists and belongs to teacher
+    const survey = await Survey.findOne({
+      _id: surveyId,
+      teacher: req.user.id
+    });
+
+    if (!survey) {
+      throw Error('Survey not found or not owned by teacher')
+    }
+
+    // Type the hashes array explicitly
+    const hashes: Array<{name: string; hash: string; _id?: Types.ObjectId}> = await Promise.all(
+      studentNames.map(async (name: string) => {
+        const hash = crypto.randomBytes(8).toString('hex');
+        const student = new Student({
+          name,
+          hash,
+          survey: surveyId,
+          class: survey.class, // Now safe to access since we checked survey exists
+          hasCompleted: false
+        });
+        await student.save();
+        return { 
+          name, 
+          hash,
+          _id: student._id // Include the _id for survey reference
+        };
+      })
+    );
+
+    // Update survey with student references
+    survey.students = hashes.map(h => h._id).filter((id): id is Types.ObjectId => !!id);
+    await survey.save();
+
+    // Return only name and hash to frontend
+    const responseData = hashes.map(({ name, hash }) => ({ name, hash }));
+    
+    res.status(200).json({ 
+      success: true, 
+      data: responseData 
+    });
   } catch (error) {
     next(error);
   }
