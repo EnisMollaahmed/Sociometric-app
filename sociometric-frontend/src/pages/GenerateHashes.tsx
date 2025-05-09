@@ -24,10 +24,19 @@ const GenerateHashes = () => {
         .map(name => name.trim())
         .filter(name => name !== '');
 
-      const { data } = await axios.post(`http://localhost:3000/api/surveys/${id}/generate-hashes`, {
-        studentNames: namesArray,
-        surveyId: id
-      });
+      const token = localStorage.getItem("token");
+      console.log('token', token)
+      const { data } = await axios.post(
+        `http://localhost:3000/api/surveys/${id}/generate-hashes`,
+        {
+          studentNames: namesArray
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}` // Make sure this matches your token
+          }
+        }
+      );;
       console.log('students',  studentNames)
       setStudents(data.data);
       setError('');
@@ -41,10 +50,17 @@ const GenerateHashes = () => {
 
   const activateSurvey = async () => {
     try {
+      const token = localStorage.getItem("token");
       await axios.patch(`http://localhost:3000/api/surveys/${id}`, { 
         status: 'active',
         students: students.map(s => s.hash) // Save hashes to survey
-      });
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}` // Make sure this matches your token
+        }
+      },
+    );
       navigate('/teacher-surveys');
     } catch (err) {
       setError('Failed to activate survey');

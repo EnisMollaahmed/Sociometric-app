@@ -119,6 +119,7 @@ export const generateStudentHashes: AsyncRequestHandler = async (req, res, next)
   try {
     const { studentNames } = req.body;
     const surveyId = req.params.id;
+    console.log('kur kapan')
     
     // Delete existing students for this survey
     await Student.deleteMany({ survey: surveyId });
