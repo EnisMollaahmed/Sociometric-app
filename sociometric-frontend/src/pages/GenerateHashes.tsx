@@ -66,7 +66,7 @@ const activateSurvey = async () => {
     );
     
     if (response.data.success) {
-      navigate('/teacher-surveys');
+      navigate('/');
     }
   } catch (err) {
     console.log(err)

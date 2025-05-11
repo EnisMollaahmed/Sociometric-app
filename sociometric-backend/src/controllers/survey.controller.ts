@@ -5,6 +5,7 @@ import Question from '../models/Question';
 import Student from '../models/Student';
 import { AsyncRequestHandler } from '../types/types';
 import crypto from 'crypto'
+import { StudentResponse, PopulatedQuestion, SurveyResultsData } from '../types/survey-result';
 
 export const getTeacherSurveys: AsyncRequestHandler = async (req, res, next) => {
   try {
@@ -18,23 +19,82 @@ export const getTeacherSurveys: AsyncRequestHandler = async (req, res, next) => 
 };
 
 export const getSurveyResults: AsyncRequestHandler = async (req, res, next) => {
-  try {
-    const survey = await Survey.findById(req.params.id)
-      .populate('questions')
-      .populate('students');
+    try {
+        const survey = await Survey.findById(req.params.id)
+            .populate<{ students: StudentResponse[] }>({
+                path: 'students',
+                select: 'name hasCompleted responses'
+            })
+            .populate<{ questions: PopulatedQuestion[] }>({
+                path: 'questions',
+                select: 'content type category'
+            })
+            .lean();
 
-    if (!survey) {
-      res.status(404).json({ success: false, message: 'Survey not found' });
-      return;
+        if (!survey) {
+            throw Error('Survey not found');
+        }
+
+        // Calculate completion rate
+        const completedCount = survey.students.filter(s => s.hasCompleted).length;
+        const completionRate = Math.round((completedCount / survey.students.length) * 100);
+
+        // Process question results
+        const results = survey.questions.map(question => {
+            // Get all responses for this question
+            const allResponses = survey.students.flatMap(student => 
+                student.responses
+                    .filter(r => r.questionId.toString() === question._id.toString())
+                    .flatMap(r => r.selectedStudents)
+            );
+
+            // Count votes per student
+            const responseCounts = allResponses.reduce((acc: Record<string, number>, studentId: string) => {
+                acc[studentId] = (acc[studentId] || 0) + 1;
+                return acc;
+            }, {});
+
+            const totalResponses = Object.values(responseCounts).reduce((sum: number, count: number) => sum + count, 0);
+
+            return {
+                questionId: question._id,
+                questionContent: question.content,
+                responses: Object.entries(responseCounts).map(([studentId, count]) => {
+                    const student = survey.students.find(s => s._id.toString() === studentId);
+                    return {
+                        name: student?.name || 'Unknown',
+                        count: count as number,
+                        percentage: totalResponses > 0 ? Math.round((count as number / totalResponses) * 100) : 0
+                    };
+                }).sort((a, b) => b.count - a.count)
+            };
+        });
+
+        const responseData: SurveyResultsData = {
+            survey: {
+                _id: survey._id.toString(),
+                title: survey.title,
+                description: survey.description,
+                students: survey.students.map(s => ({
+                    ...s,
+                    _id: s._id.toString(),
+                    responses: s.responses.map(r => ({
+                        questionId: r.questionId.toString(),
+                        selectedStudents: r.selectedStudents.map(id => id.toString())
+                    }))
+                }))
+            },
+            results,
+            completionRate
+        };
+
+        res.status(200).json({ 
+            success: true, 
+            data: responseData
+        });
+    } catch (error) {
+        next(error);
     }
-
-    res.status(200).json({ 
-      success: true, 
-      data: survey
-    });
-  } catch (error) {
-    next(error);
-  }
 };
 
 export const createSurvey: AsyncRequestHandler = async (req, res, next) => {

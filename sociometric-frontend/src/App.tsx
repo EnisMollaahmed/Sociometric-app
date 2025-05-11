@@ -56,15 +56,40 @@ const router = createBrowserRouter([
         element: <SurveyResults />,
         loader: async ({ params }) => {
           const token = localStorage.getItem('token');
-          const response = await fetch(`/api/surveys/${params.id}/results`, {
-            headers: {
-              Authorization: `Bearer ${token}`
+          try {
+            const response = await fetch(
+              `http://localhost:3000/api/surveys/${params.id}/results`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+
+            if (!response.ok) {
+              if (response.status === 401) {
+                window.location.href = '/login';
+                return { error: 'Unauthorized' };
+              }
+              throw new Error(`Failed to fetch results: ${response.statusText}`);
             }
-          });
-          if (!response.ok) throw new Error('Failed to fetch results');
-          return response.json();
+
+            const result = await response.json();
+            
+            if (!result.data) {
+              throw new Error('Invalid data format from server');
+            }
+
+            return { data: result.data };  // Ensure we're passing data directly
+          } catch (error) {
+            console.error('Loader error:', error);
+            return { 
+              error: error instanceof Error ? error.message : 'Failed to load results' 
+            };
+          }
         }
-      },
+      },   
       {
         path: 'survey/:id/generate-hashes',
         element: <GenerateHashes />

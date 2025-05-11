@@ -1,45 +1,67 @@
-import { useLoaderData } from 'react-router';
-import IStudent from '../types/student';
+import { useLoaderData, useNavigate } from 'react-router';
+import { Alert } from 'react-bootstrap';
 import { SurveyResultsData } from '../types/survey-result';
 
 export default function SurveyResults() {
-  const { data } = useLoaderData() as { data: SurveyResultsData };
+  const navigate = useNavigate();
+  const loaderData = useLoaderData() as 
+    | { data: SurveyResultsData }
+    | { error: string };
+
+  // Handle error state
+  if ('error' in loaderData) {
+    return (
+      <div className="p-4">
+        <Alert variant="danger">
+          {loaderData.error}
+          <button 
+            onClick={() => navigate(-1)}
+            className="ms-3 btn btn-sm btn-outline-danger"
+          >
+            Go Back
+          </button>
+        </Alert>
+      </div>
+    );
+  }
+
+  // Destructure after error check
+  const { data } = loaderData;
 
   return (
-    <section className="survey-results">
-      <h1>{data.survey.title} Results</h1>
+    <section className="survey-results p-4">
+      <h1 className="mb-4">{data.survey.title} Results</h1>
       
-      <section className="results-summary">
-        <section className="summary-item">
-          <h3>{data.survey.students.length}</h3>
-          <p>Total Students</p>
-        </section>
-        <section className="summary-item">
-          <h3>{data.survey.students.filter((s: IStudent) => s.hasCompleted).length}</h3>
-          <p>Responses</p>
-        </section>
-        <section className="summary-item">
-          <h3>{data.completionRate}%</h3>
-          <p>Completion Rate</p>
-        </section>
-      </section>
+      {/* Results summary */}
+      <div className="results-summary mb-4 p-3 bg-light rounded">
+        <div className="d-flex justify-content-between">
+          <div className="text-center">
+            <h3>{data.survey.students.length}</h3>
+            <p>Total Students</p>
+          </div>
+          <div className="text-center">
+            <h3>{data.completionRate}%</h3>
+            <p>Completion Rate</p>
+          </div>
+        </div>
+      </div>
 
-      {data.results.map((question, idx) => (
-        <section key={question.questionId} className="question-results">
-          <h2>Question {idx + 1}: {question.questionContent}</h2>
+      {/* Questions results */}
+      {data.results.map((question) => (
+        <div key={question.questionId} className="question-results mb-4 p-3 border rounded">
+          <h2 className="h4">{question.questionContent}</h2>
           
-          <section className="responses-list">
+          <ul className="list-unstyled">
             {question.responses.map((response, i) => (
-              <section key={i} className="response-item">
-                <span className="student-name">{response.name}</span>
-                <span className="vote-count">{response.count} votes</span>
-                <span className="percentage-badge">
-                  {response.percentage}%
+              <li key={i} className="d-flex justify-content-between py-2 border-bottom">
+                <span>{response.name}</span>
+                <span>
+                  {response.count} votes ({response.percentage}%)
                 </span>
-              </section>
+              </li>
             ))}
-          </section>
-        </section>
+          </ul>
+        </div>
       ))}
     </section>
   );
