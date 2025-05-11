@@ -6,7 +6,9 @@ import {
   getSurveyForStudent,
   submitSurvey,
   getQuestions,
-  generateStudentHashes
+  generateStudentHashes,
+  updateSurvey,
+  activateSurvey
 } from '../controllers/survey.controller';
 import { protect, teacherOnly } from '../middlewares/auth.middleware';
 
@@ -20,6 +22,8 @@ router.get('/:id/results', teacherOnly, getSurveyResults);
 router.post('/', teacherOnly, createSurvey);
 router.post('/:id/generate-hashes', teacherOnly, generateStudentHashes);
 router.get('/:id/student', getSurveyForStudent);
-router.post('/submit', submitSurvey);
+router.post('/submit', submitSurvey);// Should have this route
+router.patch('/:id', teacherOnly, updateSurvey);
+router.patch('/:id/activate', teacherOnly, activateSurvey);
 
 export default router;

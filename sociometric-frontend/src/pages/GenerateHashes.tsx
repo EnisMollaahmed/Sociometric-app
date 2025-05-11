@@ -48,25 +48,31 @@ const GenerateHashes = () => {
     }
   };
 
-  const activateSurvey = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.patch(`http://localhost:3000/api/surveys/${id}`, { 
+const activateSurvey = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.patch(
+      `/api/surveys/${id}/activate`,
+      { 
         status: 'active',
-        students: students.map(s => s.hash) // Save hashes to survey
+        students: students.map(s => s.hash) // Send hashes, not IDs
       },
       {
         headers: {
-          Authorization: `Bearer ${token}` // Make sure this matches your token
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      },
+      }
     );
+    
+    if (response.data.success) {
       navigate('/teacher-surveys');
-    } catch (err) {
-      setError('Failed to activate survey');
-      console.error(err);
     }
-  };
+  } catch (err) {
+    console.log(err)
+    setError('Failed to activate survey');
+  }
+};
 
   return (
     <div className="generate-hashes p-4">

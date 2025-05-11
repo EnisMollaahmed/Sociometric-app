@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import Survey from '../models/Survey';
 import Question from '../models/Question';
 import Student from '../models/Student';
@@ -167,5 +167,74 @@ export const generateStudentHashes: AsyncRequestHandler = async (req, res, next)
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// survey.controller.ts
+export const updateSurvey: AsyncRequestHandler = async (req, res, next) => {
+  try {
+    const survey = await Survey.findByIdAndUpdate(
+      req.params.id,
+      { status: 'active', students: req.body.students },
+      { new: true }
+    );
+    if (!survey) throw new Error('Survey not found');
+    res.json({ success: true, data: survey });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const activateSurvey: AsyncRequestHandler = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
+  try {
+    const { id } = req.params;
+    const { students: studentHashes } = req.body;
+
+    // 1. Find all students by their hashes (within the transaction)
+    const students = await Student.find(
+      { 
+        hash: { $in: studentHashes },
+        survey: id 
+      },
+      null,
+      { session } // Important: pass the session
+    ).select('_id');
+
+    if (students.length !== studentHashes.length) {
+      const invalidHashes = studentHashes.filter((hash: string) => !students.some(s => s.hash === hash));
+      throw new Error(`Invalid hashes: ${invalidHashes.join(', ')}`);
+    }
+
+    // 2. Update the survey (within the same transaction)
+    const survey = await Survey.findOneAndUpdate(
+      { _id: id, teacher: req.user.id },
+      { 
+        status: 'active',
+        students: students.map(s => s._id)
+      },
+      { 
+        new: true,
+        session // Important: pass the session
+      }
+    );
+
+    if (!survey) {
+      throw new Error('Survey not found or not owned by teacher');
+    }
+
+    // Commit the transaction if everything succeeded
+    await session.commitTransaction();
+    
+    res.status(200).json({ success: true, data: survey });
+  } catch (error) {
+    // Rollback if any operation fails
+    await session.abortTransaction();
+    next(error);
+  } finally {
+    // End the session regardless of success/failure
+    session.endSession();
   }
 };
