@@ -8,6 +8,7 @@ import SurveyResults from './pages/SurveyResult';
 import CreateSurvey from './pages/CreateSurvey';
 import GenerateHashes from './pages/GenerateHashes';
 import StudentSurvey from './pages/StudentSurvey';
+import StudentLogin from './pages/StudentLogin';
 
 const router = createBrowserRouter([
   {
@@ -97,7 +98,17 @@ const router = createBrowserRouter([
       {
         path: 'survey/:id',
         element: <StudentSurvey />,
-        loader: async ({ params }) => {
+      },
+      {
+        path: 'student-login',
+        element: <StudentLogin />
+      }
+    ]
+  }
+]);
+
+/*
+loader: async ({ params }) => {
           const token = localStorage.getItem('token');
           const response = await fetch(`/api/surveys/${params.id}/student`,{
             headers: {
@@ -107,11 +118,7 @@ const router = createBrowserRouter([
           if (!response.ok) throw new Error('Failed to fetch survey');
           return response.json();
         }
-      }
-    ]
-  }
-]);
-
+*/
 function App() {
   return <RouterProvider router={router} />;
 }

@@ -6,6 +6,8 @@ import Student from '../models/Student';
 import { AsyncRequestHandler } from '../types/types';
 import crypto from 'crypto'
 import { StudentResponse, PopulatedQuestion, SurveyResultsData } from '../types/survey-result';
+import { IQuestion } from '../types/question';
+import { IStudent } from '../types/student';
 
 export const getTeacherSurveys: AsyncRequestHandler = async (req, res, next) => {
   try {
@@ -125,15 +127,35 @@ export const createSurvey: AsyncRequestHandler = async (req, res, next) => {
 export const getSurveyForStudent: AsyncRequestHandler = async (req, res, next) => {
   try {
     const survey = await Survey.findById(req.params.id)
-      .populate('questions')
-      .select('-students -teacher');
-    
+      .populate<{
+        questions: IQuestion[];
+        students: IStudent[];
+      }>({
+        path: 'questions students',
+        select: 'name content type category hasCompleted'
+      })
+      .lean();
+
     if (!survey) {
-      res.status(404).json({ success: false, message: 'Survey not found' });
-      return;
+      throw Error("Survey not found");
     }
 
-    res.status(200).json({ success: true, data: survey });
+    if (survey.status !== 'active') {
+      throw Error("Survey is not active");
+    }
+
+    // TypeScript now knows survey.students is IStudent[]
+    const activeStudents = survey.students.filter(
+      student => !student.hasCompleted
+    );
+
+    res.status(200).json({ 
+      success: true, 
+      data: {
+        questions: survey.questions,
+        students: activeStudents
+      }
+    });
   } catch (error) {
     next(error);
   }

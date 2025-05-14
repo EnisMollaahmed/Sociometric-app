@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button, Form, Alert, Card } from 'react-bootstrap';
-import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const StudentLogin = () => {
   const [hash, setHash] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,19 +16,22 @@ const StudentLogin = () => {
       setLoading(true);
       setError('');
       
-      const response = await axios.post('http://localhost:3000/api/auth/student-login', {
-        hash
+      const response = await fetch('http://localhost:3000/api/auth/student-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hash })
       });
 
-      if (response.data.success) {
-        localStorage.setItem('studentToken', response.data.token);
-        navigate(`/survey/${response.data.surveyId}`);
-      } else {
-        setError('Invalid access code');
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Invalid access code');
       }
+
+      login(data.token, 'student');
+      navigate(`/survey/${data.surveyId}`);
     } catch (err) {
-      setError('Invalid access code or survey not found');
-      console.error(err);
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -55,11 +59,22 @@ const StudentLogin = () => {
             <Button 
               variant="primary" 
               type="submit" 
-              className="w-100"
+              className="w-100 mb-3"
               disabled={loading}
             >
-              {loading ? 'Verifying...' : 'Access Survey'}
+              {loading ? 'Accessing...' : 'Access Survey'}
             </Button>
+
+            <div className="text-center mt-3">
+              <p className="text-muted">Are you a teacher?</p>
+              <Button 
+                variant="outline-secondary" 
+                onClick={() => navigate('/login')}
+                className="w-100"
+              >
+                Go to Teacher Login
+              </Button>
+            </div>
           </Form>
         </Card.Body>
       </Card>

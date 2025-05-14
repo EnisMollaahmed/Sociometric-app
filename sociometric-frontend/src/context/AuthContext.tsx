@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (token: string, role = 'teacher') => {
     localStorage.setItem('token', token);
+    localStorage.setItem('role', role);
     const decoded:ITeacher | IStudent = jwtDecode(token);
     setUser(decoded);
     setToken(token);
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('role');
     setUser(null);
     setToken(null);
     setRole(null);

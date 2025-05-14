@@ -5,6 +5,7 @@ import Student from '../models/Student';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { AsyncRequestHandler } from '../types/types';
+import { Survey } from '../types/survey';
 
 export const register: AsyncRequestHandler = async (req, res, next) => {
   try {
@@ -86,27 +87,37 @@ export const getMe: AsyncRequestHandler = async (req, res, next) => {
 export const studentLogin: AsyncRequestHandler = async (req, res, next) => {
   try {
     const { hash } = req.body;
-    const student = await Student.findOne({ hash })
-      .populate('survey');
     
-    if (!student || student.hasCompleted) {
-      throw Error("Invalid or used access code");
+    const student = await Student.findOne({ hash })
+      .populate<{ survey: Survey }>('survey');
+
+    if (!student) {
+      throw Error("Invalid access code");
     }
 
+    if (student.hasCompleted) {
+      throw Error("Access code already used");
+    }
+
+    // Now TypeScript knows student.survey is populated
     const token = jwt.sign(
       { 
         id: student._id,
-        survey: student.survey,
+        survey: student.survey._id, // No more error here
         role: 'student' 
       },
       process.env.JWT_SECRET!,
-      { expiresIn: '2h' } // Longer expiry for students
+      { expiresIn: '2h' }
     );
+
+    // Mark as completed
+    student.hasCompleted = true;
+    await student.save();
 
     res.status(200).json({ 
       success: true, 
       token,
-      surveyId: student.survey
+      surveyId: student.survey._id // No more error here
     });
   } catch (error) {
     next(error);
