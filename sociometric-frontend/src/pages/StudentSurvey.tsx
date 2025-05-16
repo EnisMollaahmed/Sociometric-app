@@ -1,44 +1,34 @@
-import { useNavigate, useParams } from 'react-router';//useLoaderData,
+import { useLoaderData, useNavigate, useParams } from 'react-router';
 import { Form, Button, Dropdown, Alert } from 'react-bootstrap';
-// import { Form as RouterForm } from 'react-router';
-// import { Survey } from '../types/survey';
-import IStudent from '../types/student';
 import { useAuth } from '../context/AuthContext';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Question } from '../types/quesion';
+import IStudent from '../types/student';
+
 
 export default function StudentSurvey() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [students, setStudents] = useState<IStudent[]>([]);
+  const { questions, students } = useLoaderData() as {
+    questions: Question[];
+    students: IStudent[];
+  };
   const [responses, setResponses] = useState<Record<string, string[]>>({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => {
-    const fetchSurvey = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`http://localhost:3000/api/surveys/${id}/student`);
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.message || 'Failed to load survey');
-        
-        setQuestions(data.data.questions);
-        setStudents(data.data.students);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load survey');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSurvey();
-  }, [id]);
-
+  if (questions.length === 0) {
+    return (
+      <div className="text-center p-5">
+        <Alert variant="danger">No questions found for this survey</Alert>
+        <Button onClick={() => navigate('/student-login')} variant="primary">
+          Back to Login
+        </Button>
+      </div>
+    );
+  }
   const handleSelect = (questionId: string, studentId: string) => {
     setResponses(prev => {
       const current = prev[questionId] || [];
@@ -62,7 +52,7 @@ export default function StudentSurvey() {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          surveyId: id,
+          surveyId: id, // From useParams
           responses: Object.entries(responses).map(([questionId, selectedStudents]) => ({
             questionId,
             selectedStudents
@@ -70,7 +60,10 @@ export default function StudentSurvey() {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to submit survey');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Submission failed');
+      }
       
       setSubmitted(true);
       logout();

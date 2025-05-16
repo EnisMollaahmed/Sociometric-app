@@ -103,22 +103,19 @@ export const createSurvey: AsyncRequestHandler = async (req, res, next) => {
   try {
     const { title, description, class: className, questions } = req.body;
 
-    // First find the actual questions in database to get their real IDs
-    const questionDocs = await Question.find({
-      content: { $in: questions } // Match questions by content
-    });
-
-
     const survey = await Survey.create({
       title,
       description,
       class: className,
       teacher: req.user.id,
-      questions: questionDocs.map(q => q._id), // Use the actual question IDs
+      questions, // Store whatever IDs are sent
       status: 'draft'
     });
 
-    res.status(201).json({ success: true, data: survey });
+    res.status(201).json({ 
+      success: true, 
+      data: survey 
+    });
   } catch (error) {
     next(error);
   }
@@ -161,24 +158,38 @@ export const getSurveyForStudent: AsyncRequestHandler = async (req, res, next) =
   }
 };
 
-export const submitSurvey: AsyncRequestHandler = async (req, res, next) => {
+export const submitSurvey: AsyncRequestHandler = async (req, res) => {
   try {
-    const { responses } = req.body;
-    const studentId = req.user.id;
+    const { surveyId, responses } = req.body;
+    const studentId = req.user.id; // From JWT
 
+    // 1. Find the student
     const student = await Student.findById(studentId);
-    if (!student || student.hasCompleted) {
-      res.status(400).json({ success: false, message: 'Invalid submission' });
-      return;
+    if (!student) {
+      throw Error("Student not found");
     }
 
-    student.responses = responses;
+    // 2. Verify the survey exists
+    const survey = await Survey.findById(surveyId);
+    if (!survey) {
+      throw Error("Student not found");
+    }
+
+    // 3. Save responses
+    student.responses = responses.map((r: any) => ({
+      questionId: r.questionId,
+      selectedStudents: r.selectedStudents
+    }));
     student.hasCompleted = true;
     await student.save();
 
     res.status(200).json({ success: true });
   } catch (error) {
-    next(error);
+    res.status(400).json({ 
+      success: false,
+      message: 'Submission failed',
+      error: (error as Error).message 
+    });
   }
 };
 

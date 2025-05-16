@@ -62,32 +62,33 @@ export default function CreateSurvey() {
       setError('Minimum 3 questions required');
       return;
     }
-  
+
     try {
-      // Get the full question objects for the selected IDs
-      const selectedQuestionContents = questions
-        .filter(q => selectedQuestions.includes(q._id))
-        .map(q => q.content);
-  
       const response = await fetch('http://localhost:3000/api/surveys/', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json', 
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           title: formData.get('title'),
           description: formData.get('description'),
           class: formData.get('class'),
-          questions: selectedQuestionContents // Send question content instead of IDs
+          questions: selectedQuestions
         })
       });
+
+      const responseData = await response.json();
       
-      if (!response.ok) throw new Error('Failed to create survey');
-      const { data } = await response.json();
-      navigate(`/survey/${data._id}/generate-hashes`);
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Survey creation failed');
+      }
+
+      navigate(`/survey/${responseData.data._id}/generate-hashes`);
     } catch (err) {
-      setError((err as Error).message);
+      setError(
+        err instanceof Error ? err.message : 'Failed to create survey'
+      );
     }
   };
 

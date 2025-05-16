@@ -98,6 +98,42 @@ const router = createBrowserRouter([
       {
         path: 'survey/:id',
         element: <StudentSurvey />,
+        loader: async ({ params }) => {
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch(
+            `http://localhost:3000/api/surveys/${params.id}/student`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          
+          // Debugging log
+          console.log("API Response:", data);
+          
+          if (!data.data) {
+            throw new Error("Invalid data format from server");
+          }
+
+          return {
+            questions: data.data.questions || [],
+            students: data.data.students || []
+          };
+        } catch (error) {
+          console.error("Loader error:", error);
+          throw new Error("Failed to load survey data");
+        }
+      },
+        errorElement: <ErrorPage />
       },
       {
         path: 'student-login',

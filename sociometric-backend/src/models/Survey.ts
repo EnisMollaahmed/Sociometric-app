@@ -17,7 +17,11 @@ const SurveySchema = new mongoose.Schema<ISurvey>({
   description: String,
   teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher', required: true },
   class: { type: String, required: true },
-  questions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],
+  questions: [{
+    type: String, // or mongoose.Schema.Types.ObjectId if using ObjectIds
+    ref: 'Question',
+    required: true
+  }],
   students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
   status: { type: String, enum: ['draft', 'active', 'completed'], default: 'draft' },
   createdAt: { type: Date, default: Date.now },
