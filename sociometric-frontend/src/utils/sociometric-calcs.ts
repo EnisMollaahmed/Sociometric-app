@@ -5,8 +5,6 @@ import { Survey } from "../types/survey";
 
 export function formatSurveyDate(dateString: string): string {
   try {
-    // Handle cases where dateString might be undefined or invalid
-    console.log(dateString)
     if (!dateString) return 'No date';
     
     const date = new Date(dateString);
@@ -27,7 +25,6 @@ export function calculateParticipationRate(students: IStudent[]): string {
   
   const completedCount = students.filter(student => student.hasCompleted).length;
   const participation = (completedCount / students.length) * 100;
-  console.log(participation)
   
   // Fix: Ensure the percentage is between 0-100 and has no decimal places
   return `${Math.min(100, Math.max(0, Math.round(participation)))}%`;
@@ -55,16 +52,12 @@ export function getMostPopularStudent(survey: Survey): string {
 
   let popularStudent = 'N/A';
   let maxVotes = 0;
-  console.log('student votes map: ', studentVotes)
   studentVotes.forEach((votes, name) => {
-    console.log('popularVotes:',votes);
-    console.log('popular names: ', name)
     if (votes > maxVotes) {
       maxVotes = votes;
       popularStudent = name;
     }
   });
-  console.log('popular student:', popularStudent);
   return popularStudent;
 }
 

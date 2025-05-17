@@ -48,10 +48,8 @@ const router = createBrowserRouter([
             
             const data = await response.json();
             const surveys: Survey[] = data.data;
-            console.log(surveys[0].createdAt)
             // Transform to SurveySummary using helper functions
-            const surveySummaries: SurveySummary[] = surveys.map(survey => {
-              console.log(survey.createdAt);
+            const surveySummaries: SurveySummary[] = surveys.reverse().splice(0,3).map(survey => {
               return({
               id: survey._id,
               title: survey.title,
@@ -168,9 +166,6 @@ const router = createBrowserRouter([
           }
 
           const data = await response.json();
-          
-          // Debugging log
-          console.log("API Response:", data);
           
           if (!data.data) {
             throw new Error("Invalid data format from server");

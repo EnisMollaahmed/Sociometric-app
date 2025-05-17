@@ -9,7 +9,6 @@ interface SurveyCardProps {
 const SurveyCard = ({ survey, onClick }: SurveyCardProps) => {
   // Calculate completion percentage safely
   const participationPercentage = `${Math.round(parseFloat(survey.participation))}%`;
-  console.log(survey)
   return (
     <Card className="survey-card" onClick={onClick}>
       <Card.Body>
@@ -19,11 +18,11 @@ const SurveyCard = ({ survey, onClick }: SurveyCardProps) => {
         </Card.Subtitle>
         <section className="survey-stats">
           <div className="stat-item">
-            <span className="stat-label">Most Popular</span>
+            <span className="stat-label">Most Popular: </span>
             <span className="stat-value popular">{survey.popularStudent || 'N/A'}</span>
           </div>
           <div className="stat-item">
-            <span className="stat-label">Rejected</span>
+            <span className="stat-label">Rejected: </span>
             <span className="stat-value rejected">{survey.rejectedStudent || 'N/A'}</span>
           </div>
         </section>
