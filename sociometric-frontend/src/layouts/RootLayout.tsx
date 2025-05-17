@@ -31,7 +31,8 @@ export default function RootLayout() {
               <Nav className="me-auto">
                 {role === 'teacher' && (
                   <>
-                    <Nav.Link as={Link} to="/">My Surveys</Nav.Link>
+                    <Nav.Link as={Link} to="/">Dashboard</Nav.Link>
+                    <Nav.Link as={Link} to="/my-surveys">My Surveys</Nav.Link>
                     <Nav.Link as={Link} to="/create-survey">Create Survey</Nav.Link>
                   </>
                 )}

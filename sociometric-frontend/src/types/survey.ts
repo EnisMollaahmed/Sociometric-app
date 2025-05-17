@@ -6,5 +6,6 @@ export interface Survey {
     title: string;
     students: IStudent[];
     description:string;
-    questions:Question[]
+    questions:Question[];
+    createdAt:string;
 }

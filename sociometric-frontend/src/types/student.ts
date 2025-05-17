@@ -4,6 +4,6 @@ export default interface IStudent{
     hash:string,
     survey:string,
     class:string,
-    responses:{questionId:string, seletedStudents:string[]}[],
+    responses:{questionId:string, selectedStudents:string[]}[],
     hasCompleted:boolean
 }

@@ -9,6 +9,10 @@ import CreateSurvey from './pages/CreateSurvey';
 import GenerateHashes from './pages/GenerateHashes';
 import StudentSurvey from './pages/StudentSurvey';
 import StudentLogin from './pages/StudentLogin';
+import Dashboard from './pages/Dashboard';
+import { SurveySummary } from './types/survey-summary';
+import { Survey } from './types/survey';
+import { formatSurveyDate, getMostPopularStudent, getMostRejectedStudent, calculateParticipationRate } from './utils/sociometric-calcs';
 
 const router = createBrowserRouter([
   {
@@ -18,6 +22,54 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <Dashboard />,
+        loader: async (): Promise<{ surveys: SurveySummary[] }> => {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            window.location.href = '/login';
+            return { surveys: [] };
+          }
+
+          try {
+            const response = await fetch('http://localhost:3000/api/surveys/teacher', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (!response.ok) {
+              if (response.status === 401) {
+                window.location.href = '/login';
+                return { surveys: [] };
+              }
+              throw new Error(`Failed to fetch surveys: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            const surveys: Survey[] = data.data;
+            console.log(surveys[0].createdAt)
+            // Transform to SurveySummary using helper functions
+            const surveySummaries: SurveySummary[] = surveys.map(survey => {
+              console.log(survey.createdAt);
+              return({
+              id: survey._id,
+              title: survey.title,
+              date: formatSurveyDate(survey.createdAt),
+              popularStudent: getMostPopularStudent(survey),
+              rejectedStudent: getMostRejectedStudent(survey),
+              participation: calculateParticipationRate(survey.students)
+            })});
+
+            return { surveys: surveySummaries };
+          } catch (error) {
+            console.error('Error loading surveys:', error);
+            return { surveys: [] };
+          }
+        }
+      },
+      {
+        path:'my-surveys',
         element: <TeacherSurveys />,
         loader: async () => {
           const token = localStorage.getItem('token');
