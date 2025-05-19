@@ -8,7 +8,7 @@ import authRoutes from './routes/auth.routes';
 import surveyRoutes from './routes/survey.routes';
 import { notFound, errorHandler } from './middlewares/error.middleware';
 
-const port = process.env.PORT || '3000'
+const port = process.env.PORT || 3000
 
 dotenv.config();
 connectDB();
