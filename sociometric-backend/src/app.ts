@@ -15,7 +15,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-    origin: '*', // Only for testing!
+    origin: 'sociometric-app.vercel.app',
     credentials: true
   }));
 app.use(helmet());
