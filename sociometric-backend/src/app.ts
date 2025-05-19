@@ -24,6 +24,7 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/surveys', surveyRoutes);
 
+
 app.use(notFound);
 app.use(errorHandler);
 
