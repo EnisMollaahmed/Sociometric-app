@@ -8,6 +8,8 @@ import authRoutes from './routes/auth.routes';
 import surveyRoutes from './routes/survey.routes';
 import { notFound, errorHandler } from './middlewares/error.middleware';
 
+const port = process.env.PORT || '3000'
+
 dotenv.config();
 connectDB();
 
@@ -28,6 +30,6 @@ app.use('/api/surveys', surveyRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(process.env.PORT);
+app.listen(port);
 
 export default app;
