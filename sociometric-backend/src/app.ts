@@ -16,10 +16,7 @@ connectDB();
 const app = express();
 
 app.use(express.json());
-app.use(cors({
-    origin: 'sociometric-app.vercel.app',
-    credentials: true
-  }));
+app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 
