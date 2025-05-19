@@ -64,7 +64,7 @@ export default function CreateSurvey() {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/surveys/', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/surveys/`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

@@ -15,7 +15,7 @@ export const register: AsyncRequestHandler = async (req, res, next) => {
     const token = jwt.sign(
       { id: teacher._id, role: 'teacher' },
       process.env.JWT_SECRET!,
-      { expiresIn: '1h' }
+      { expiresIn: process.env.JWT_EXPIRE } as jwt.SignOptions
     );
 
     res.status(201).json({ success: true, token });
@@ -37,7 +37,7 @@ export const login: AsyncRequestHandler = async (req, res, next) => {
     const token = jwt.sign(
       { id: teacher._id, role: 'teacher' },
       process.env.JWT_SECRET!,
-      { expiresIn: '1h' }
+      { expiresIn: process.env.JWT_EXPIRE} as jwt.SignOptions
     );
 
     res.status(200).json({ success: true, token });
@@ -107,7 +107,7 @@ export const studentLogin: AsyncRequestHandler = async (req, res, next) => {
         role: 'student' 
       },
       process.env.JWT_SECRET!,
-      { expiresIn: '2h' }
+      { expiresIn: process.env.JWT_EXPIRE } as jwt.SignOptions
     );
 
     // Mark as completed

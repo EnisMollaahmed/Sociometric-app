@@ -27,7 +27,7 @@ const GenerateHashes = () => {
       const token = localStorage.getItem("token");
       console.log('token', token)
       const { data } = await axios.post(
-        `http://localhost:3000/api/surveys/${id}/generate-hashes`,
+        `${import.meta.env.VITE_BACKEND_URL}/surveys/${id}/generate-hashes`,
         {
           studentNames: namesArray
         },

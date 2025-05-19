@@ -28,6 +28,6 @@ app.use('/api/surveys', surveyRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(3000);
+app.listen(process.env.SERVER_PORT);
 
 export default app;

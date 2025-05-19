@@ -31,7 +31,7 @@ const router = createBrowserRouter([
           }
 
           try {
-            const response = await fetch('http://localhost:3000/api/surveys/teacher', {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/surveys/teacher`, {
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -71,7 +71,7 @@ const router = createBrowserRouter([
         element: <TeacherSurveys />,
         loader: async () => {
           const token = localStorage.getItem('token');
-          const response = await fetch('http://localhost:3000/api/surveys/teacher', {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/surveys/teacher`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -109,7 +109,7 @@ const router = createBrowserRouter([
           const token = localStorage.getItem('token');
           try {
             const response = await fetch(
-              `http://localhost:3000/api/surveys/${params.id}/results`,
+              `${import.meta.env.VITE_BACKEND_URL}/surveys/${params.id}/results`,
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -152,7 +152,7 @@ const router = createBrowserRouter([
         try {
           const token = localStorage.getItem('token');
           const response = await fetch(
-            `http://localhost:3000/api/surveys/${params.id}/student`,
+            `${import.meta.env.VITE_BACKEND_URL}/surveys/${params.id}/student`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
