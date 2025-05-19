@@ -27,6 +27,6 @@ app.use('/api/surveys', surveyRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(port);
+app.listen(3000);
 
 export default app;
