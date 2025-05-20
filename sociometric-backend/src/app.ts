@@ -16,7 +16,7 @@ connectDB();
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: "*" }));
 app.use(helmet());
 app.use(morgan('dev'));
 
@@ -28,6 +28,6 @@ app.use('/api/surveys', surveyRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(3000);
+app.listen(port);
 
 export default app;
