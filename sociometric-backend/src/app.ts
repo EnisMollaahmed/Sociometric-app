@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -20,7 +20,9 @@ app.use(cors({ origin: "*" }));
 app.use(helmet());
 app.use(morgan('dev'));
 
-app.get("/", (req, res) => res.send("API is running 🚀"));
+app.get("/", (req, res) => {
+  res.send('API is running 🚀');
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/surveys', surveyRoutes);
 
@@ -28,6 +30,8 @@ app.use('/api/surveys', surveyRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(port);
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
 
 export default app;
